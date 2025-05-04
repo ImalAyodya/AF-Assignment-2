@@ -66,8 +66,8 @@ const ExplorePage = () => {
               onClick={() => setRegion(r.value)}
               className={`px-4 py-2 rounded-md text-sm font-medium transition ${
                 region === r.value 
-                  ? 'bg-white dark:bg-neutral-700 shadow-sm' 
-                  : 'text-neutral-700 dark:text-neutral-300 hover:bg-white/10'
+                  ? 'bg-white dark:bg-neutral-700 shadow-sm text-blue-600 dark:text-blue-400' 
+                  : 'text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-700/50'
               }`}
             >
               {r.label}
@@ -88,6 +88,7 @@ const ExplorePage = () => {
                   src={country.flags.png} 
                   alt={`Flag of ${country.name.common}`}
                   className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
+                  loading="lazy"
                 />
               </div>
               <div className="p-4">

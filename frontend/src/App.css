@@ -41,17 +41,6 @@
   }
 }
 
-/* Remove card styles that might interfere with your components */
-.card {
-  padding: 2em;
-}
-
-.read-the-docs {
-  color: var(--tw-color-neutral-400);
-}
-
-/* Add these rules at the end of your App.css file */
-
 /* Fix container and spacing issues */
 .container {
   width: 100%;
@@ -64,6 +53,8 @@
 @media (min-width: 640px) {
   .container {
     max-width: 640px;
+    padding-right: 1.5rem;
+    padding-left: 1.5rem;
   }
 }
 
@@ -76,6 +67,8 @@
 @media (min-width: 1024px) {
   .container {
     max-width: 1024px;
+    padding-right: 2rem;
+    padding-left: 2rem;
   }
 }
 
@@ -92,6 +85,7 @@ body {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  width: 100%;
 }
 
 #root {
@@ -105,4 +99,231 @@ body {
 .page-transition-container {
   position: relative;
   width: 100%;
+  will-change: opacity, transform;
+}
+
+/* Responsive font sizes */
+h1 {
+  font-size: clamp(1.75rem, 5vw, 2.5rem);
+}
+
+h2 {
+  font-size: clamp(1.5rem, 4vw, 2rem);
+}
+
+h3 {
+  font-size: clamp(1.25rem, 3vw, 1.75rem);
+}
+
+/* Responsive charts and maps */
+.chart-container {
+  position: relative !important;
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 250px;
+}
+
+@media (max-width: 768px) {
+  .chart-container {
+    height: 260px !important;
+    min-height: 200px;
+  }
+}
+
+@media (max-width: 640px) {
+  .chart-container {
+    height: 230px !important;
+  }
+}
+
+/* Fixed chart container styles - add these to prevent expansion */
+.chart-container {
+  position: relative !important;
+  height: 280px !important;
+  max-height: 280px !important;
+  width: 100% !important;
+  overflow: hidden !important;
+}
+
+/* Ensure chart containers have consistent height */
+.chart-container {
+  height: 280px !important;
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+}
+
+/* Prevent chart overflow issues */
+.chart-container > canvas {
+  max-width: 100%;
+  max-height: 100%;
+}
+
+/* Fix aspect ratio issues */
+canvas.chartjs-render-monitor {
+  max-height: 100% !important;
+}
+
+/* Fix for CSS Grid on small screens */
+.responsive-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
+  gap: 1rem;
+}
+
+/* Fix images that might overflow containers */
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Make form elements responsive */
+input, select, textarea, button {
+  max-width: 100%;
+}
+
+/* Fix for LeafletJS maps in small screens */
+.leaflet-container {
+  z-index: 0 !important; /* Prevent map z-index issues */
+}
+
+/* Fix for mobile horizontal scrolling */
+html, body {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+/* Improved form styling for dark mode */
+.dark input[type="text"],
+.dark input[type="email"],
+.dark input[type="password"],
+.dark input[type="search"],
+.dark textarea,
+.dark select {
+  background-color: rgba(38, 38, 38, 0.8);
+  color: #fff;
+  border-color: rgba(75, 85, 99, 0.4);
+}
+
+.dark input::placeholder {
+  color: rgba(156, 163, 175, 0.8);
+}
+
+.dark input:focus,
+.dark textarea:focus,
+.dark select:focus {
+  border-color: rgba(59, 130, 246, 0.5);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25);
+}
+
+/* Enhanced button and text visibility */
+.dark .text-neutral-900 {
+  color: #f3f4f6;
+}
+
+.dark .bg-neutral-100 {
+  background-color: #171717;
+}
+
+/* Fix chart label visibility in dark mode */
+.dark .chartjs-render-monitor text {
+  fill: rgba(255, 255, 255, 0.85) !important;
+}
+
+/* Ensure buttons have sufficient contrast */
+.dark .bg-neutral-800 {
+  background-color: #262626;
+}
+
+/* Make sure chart legends are visible */
+.dark .chartjs-legend li span {
+  color: rgba(255, 255, 255, 0.9) !important;
+}
+
+/* Fix region button hover states */
+.dark a:hover .text-neutral-900 {
+  color: #3b82f6 !important; /* Blue color on hover in dark mode */
+}
+
+/* Ensure form inputs have better visibility */
+.dark input::placeholder {
+  color: rgba(209, 213, 219, 0.7);
+}
+
+/* Fix focus states */
+.dark .focus\:ring-blue-500:focus {
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5);
+  border-color: #3b82f6;
+}
+
+/* Fix dark mode chart text visibility */
+.dark .chart-container canvas {
+  filter: brightness(1.05);
+}
+
+/* Dark mode chart text fixes */
+.dark .chart-container canvas {
+  filter: brightness(1.05);
+}
+
+.dark .chart-container text {
+  fill: rgba(255, 255, 255, 0.8) !important;
+}
+
+.dark .chartjs-tooltip {
+  color: white !important;
+}
+
+/* Fix for hero section spacing */
+.hero-section {
+  min-height: 100vh;
+  margin-bottom: 2rem;
+}
+
+/* Fixed spacing between sections */
+.hero-section {
+  min-height: 100vh;
+  margin-bottom: 2rem !important;
+}
+
+/* Fix spacing between main sections */
+.section-spacing {
+  margin-top: 2rem;
+  margin-bottom: 2rem;
+}
+
+/* Ensure chart containers don't overflow */
+.chart-card {
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.chart-card h3 {
+  flex: 0 0 auto;
+}
+
+.chart-card .chart-container {
+  flex: 1 1 auto;
+}
+
+/* Ensure charts look good in dark mode */
+.dark .chart-container canvas {
+  filter: brightness(1.05);
+}
+
+/* Prevent chart resize issues */
+.chartjs-size-monitor,
+.chartjs-size-monitor-expand,
+.chartjs-size-monitor-shrink {
+  position: absolute;
+  direction: ltr;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  overflow: hidden;
+  pointer-events: none;
+  visibility: hidden;
+  z-index: -1;
 }

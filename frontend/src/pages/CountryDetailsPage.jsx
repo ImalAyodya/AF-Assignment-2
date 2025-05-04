@@ -5,6 +5,7 @@ import AnimatedPage from '../components/layout/AnimatedPage'
 import CountryMap from '../components/CountryMap';
 import { useAuth } from '../context/AuthContext';
 import { FaHeart, FaRegHeart } from 'react-icons/fa';
+import { countryService } from '../services/countryService';
 
 const CountryDetailsPage = () => {
   const { countryCode } = useParams()
@@ -16,33 +17,54 @@ const CountryDetailsPage = () => {
   const { isAuthenticated, user } = useAuth();
 
   useEffect(() => {
+    // Reset state when countryCode changes
+    setLoading(true);
+    setError(null);
+    setCountry(null);
+  }, [countryCode]);
+
+  useEffect(() => {
     const fetchCountryDetails = async () => {
       try {
         setLoading(true)
-        const response = await fetch(`https://restcountries.com/v3.1/alpha/${countryCode}`)
+        console.log('Fetching country with code:', countryCode);
         
-        if (!response.ok) {
-          throw new Error('Country not found')
+        const data = await countryService.getCountryByCode(countryCode);
+        console.log('Country data received:', data);
+        
+        if (!data || data.length === 0) {
+          throw new Error('No country data found');
         }
         
-        const [data] = await response.json()
-        setCountry(data)
+        const [countryData] = data;
+        setCountry(countryData);
         
         // Check if country is in favorites
         if (isAuthenticated) {
-          const token = localStorage.getItem('token');
-          const checkFav = await fetch(`http://localhost:5000/api/favorites/check/${countryCode}`, {
-            headers: {
-              'Authorization': `Bearer ${token}`
+          try {
+            const token = localStorage.getItem('token');
+            console.log('Checking favorites with token:', token ? 'Token exists' : 'No token');
+            
+            const checkFav = await fetch(`http://localhost:5000/api/favorites/check/${countryCode}`, {
+              headers: {
+                'Authorization': `Bearer ${token}`
+              }
+            });
+            
+            console.log('Favorites check status:', checkFav.status);
+            
+            if (checkFav.ok) {
+              const favData = await checkFav.json();
+              console.log('Favorite data:', favData);
+              setIsFavorite(favData.isFavorite);
             }
-          });
-          
-          if (checkFav.ok) {
-            const favData = await checkFav.json();
-            setIsFavorite(favData.isFavorite);
+          } catch (favError) {
+            console.error('Error checking favorites:', favError);
+            // Continue without setting favorite status
           }
         }
       } catch (err) {
+        console.error('Error in fetchCountryDetails:', err);
         setError(err.message)
       } finally {
         setLoading(false)
@@ -52,19 +74,49 @@ const CountryDetailsPage = () => {
     fetchCountryDetails()
   }, [countryCode, isAuthenticated])
   
+  useEffect(() => {
+    if (loading) {
+      // Set a timeout to prevent infinite loading state
+      const timeoutId = setTimeout(() => {
+        console.log('Loading timeout reached');
+        setLoading(false);
+        if (!country && !error) {
+          setError('Loading took too long. Please try again.');
+        }
+      }, 10000); // 10 second timeout
+  
+      return () => {
+        clearTimeout(timeoutId);
+      };
+    }
+  }, [loading, country, error]);
+  
   const toggleFavorite = async () => {
     if (!isAuthenticated) {
       navigate('/login');
       return;
     }
     
+    if (!country) {
+      console.error("Cannot toggle favorite: country data is missing");
+      return;
+    }
+    
     try {
       const token = localStorage.getItem('token');
+      if (!token) {
+        console.error("No auth token found");
+        navigate('/login');
+        return;
+      }
+      
       const method = isFavorite ? 'DELETE' : 'POST';
       const url = isFavorite 
         ? `http://localhost:5000/api/favorites/${countryCode}` 
         : 'http://localhost:5000/api/favorites';
         
+      console.log(`Sending ${method} request to ${url}`);
+      
       const response = await fetch(url, {
         method,
         headers: {
@@ -78,8 +130,13 @@ const CountryDetailsPage = () => {
         }) : null
       });
       
+      console.log('Toggle favorite response:', response.status);
+      
       if (response.ok) {
         setIsFavorite(!isFavorite);
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        console.error("Server error toggling favorite:", errorData);
       }
     } catch (err) {
       console.error("Error toggling favorite:", err);
@@ -128,23 +185,38 @@ const CountryDetailsPage = () => {
 
   return (
     <AnimatedPage>
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-8">
         <motion.button 
           onClick={() => navigate(-1)} 
-          className="mb-6 px-4 py-2 flex items-center gap-2 bg-neutral-200 dark:bg-neutral-800 rounded-lg"
+          className="mb-4 sm:mb-6 px-3 sm:px-4 py-2 flex items-center gap-2 bg-neutral-200 dark:bg-neutral-800 rounded-lg"
           whileHover={{ x: -5 }}
           whileTap={{ scale: 0.95 }}
         >
           ← Back
         </motion.button>
         
+        {!country && !loading && !error && (
+          <div className="text-center py-16">
+            <p className="text-xl text-red-500">No country data found</p>
+            <motion.button 
+              onClick={() => navigate('/countries')}
+              className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              Browse All Countries
+            </motion.button>
+          </div>
+        )}
+        
         {country && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          // Existing country detail UI
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 md:gap-8">
             <motion.div
               initial={{ opacity: 0, x: -30 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.8 }}
-              className="space-y-6"
+              className="space-y-4 sm:space-y-6"
             >
               <motion.img 
                 src={country.flags.svg} 
@@ -156,8 +228,8 @@ const CountryDetailsPage = () => {
                 whileHover={{ scale: 1.02 }}
               />
               
-              {/* Add map display */}
-              {country.latlng && (
+              {/* Map with responsive height - add null check */}
+              {country && country.latlng && Array.isArray(country.latlng) && country.latlng.length >= 2 && (
                 <motion.div 
                   className="rounded-lg overflow-hidden shadow-md"
                   initial={{ opacity: 0, y: 20 }}
@@ -169,20 +241,22 @@ const CountryDetailsPage = () => {
                     lat={country.latlng[0]} 
                     lng={country.latlng[1]} 
                     country={country.name.common}
-                    className="h-64 w-full rounded-md overflow-hidden"
+                    className="h-48 sm:h-56 md:h-64 w-full rounded-md overflow-hidden"
+                    zoom={window.innerWidth < 768 ? 2 : 4}
                   />
                 </motion.div>
               )}
             </motion.div>
             
+            {/* Rest of country details with responsive text sizing */}
             <motion.div
               initial={{ opacity: 0, x: 30 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.8, delay: 0.2 }}
             >
-              <div className="flex justify-between items-center mb-6">
+              <div className="flex justify-between items-center mb-4 sm:mb-6">
                 <motion.h1 
-                  className="text-3xl font-bold"
+                  className="text-2xl sm:text-3xl font-bold"
                   initial={{ y: -20, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
                   transition={{ duration: 0.5, delay: 0.4 }}
@@ -201,14 +275,14 @@ const CountryDetailsPage = () => {
                   transition={{ delay: 0.5 }}
                 >
                   {isFavorite ? (
-                    <FaHeart className="h-6 w-6 text-red-500" />
+                    <FaHeart className="h-5 w-5 sm:h-6 sm:w-6 text-red-500" />
                   ) : (
-                    <FaRegHeart className="h-6 w-6 text-gray-400 dark:text-gray-300" />
+                    <FaRegHeart className="h-5 w-5 sm:h-6 sm:w-6 text-gray-400 dark:text-gray-300" />
                   )}
                 </motion.button>
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 sm:gap-x-8 gap-y-2 sm:gap-y-4 text-sm sm:text-base">
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
@@ -276,6 +350,35 @@ const CountryDetailsPage = () => {
                   )}
                 </div>
               </motion.div>
+
+              {/* Add this button near the country details: */}
+              {isAuthenticated ? (
+                <motion.button
+                  onClick={toggleFavorite}
+                  className={`flex items-center px-4 py-2 rounded-md text-white ${
+                    isFavorite ? 'bg-red-500 hover:bg-red-600' : 'bg-blue-500 hover:bg-blue-600'
+                  }`}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  {isFavorite ? (
+                    <>
+                      <FaHeart className="mr-2" /> Remove from Favorites
+                    </>
+                  ) : (
+                    <>
+                      <FaRegHeart className="mr-2" /> Add to Favorites
+                    </>
+                  )}
+                </motion.button>
+              ) : (
+                <Link
+                  to="/login"
+                  className="flex items-center px-4 py-2 rounded-md text-white bg-blue-500 hover:bg-blue-600"
+                >
+                  <FaRegHeart className="mr-2" /> Login to Add to Favorites
+                </Link>
+              )}
             </motion.div>
           </div>
         )}

@@ -238,52 +238,170 @@ export default function HomePage() {
     }
   };
 
-  const chartOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        position: 'top',
-        labels: {
-          boxWidth: 12,
-          padding: 15,
-          font: {
-            size: window.innerWidth < 768 ? 10 : 12
-          },
-          color: theme => theme.color === 'dark' ? '#fff' : '#333'
+  // Update the chart options:
+
+const chartOptions = {
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: {
+    legend: {
+      position: window.innerWidth < 640 ? 'bottom' : 'top',
+      align: 'center',
+      labels: {
+        boxWidth: window.innerWidth < 640 ? 8 : 14,
+        padding: window.innerWidth < 640 ? 8 : 15,
+        font: {
+          size: window.innerWidth < 640 ? 10 : 12
+        },
+        color: function(context) {
+          return document.documentElement.classList.contains('dark') ? 
+            'rgba(255, 255, 255, 0.9)' : 
+            'rgba(0, 0, 0, 0.8)';
         }
+      }
+    },
+    tooltip: {
+      bodyFont: {
+        size: 12,
       },
-      tooltip: {
-        bodyFont: {
-          size: 14,
+      titleFont: {
+        size: 12,
+      },
+      backgroundColor: function(context) {
+        return document.documentElement.classList.contains('dark') ? 
+          'rgba(30, 41, 59, 0.95)' : 
+          'rgba(255, 255, 255, 0.95)';
+      },
+      titleColor: function(context) {
+        return document.documentElement.classList.contains('dark') ? 
+          'rgba(255, 255, 255, 0.95)' : 
+          'rgba(0, 0, 0, 0.85)';
+      },
+      bodyColor: function(context) {
+        return document.documentElement.classList.contains('dark') ? 
+          'rgba(255, 255, 255, 0.8)' : 
+          'rgba(0, 0, 0, 0.7)';
+      },
+      displayColors: window.innerWidth > 480,
+      padding: window.innerWidth < 640 ? 8 : 12,
+      boxPadding: window.innerWidth < 640 ? 3 : 6,
+      usePointStyle: true,
+    },
+  },
+  scales: {
+    x: {
+      ticks: {
+        color: function(context) {
+          return document.documentElement.classList.contains('dark') ? 
+            'rgba(255, 255, 255, 0.8)' : 
+            'rgba(0, 0, 0, 0.7)';
+        },
+        font: {
+          size: window.innerWidth < 640 ? 9 : 11,
+        },
+        maxRotation: window.innerWidth < 640 ? 90 : 45,
+        minRotation: window.innerWidth < 640 ? 45 : 45,
+      },
+      grid: {
+        display: window.innerWidth >= 640,
+        color: function(context) {
+          return document.documentElement.classList.contains('dark') ? 
+            'rgba(255, 255, 255, 0.1)' : 
+            'rgba(0, 0, 0, 0.1)';
         },
       },
     },
-    scales: {
-      x: {
-        ticks: {
-          color: theme => theme.color === 'dark' ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.7)',
+    y: {
+      ticks: {
+        color: function(context) {
+          return document.documentElement.classList.contains('dark') ? 
+            'rgba(255, 255, 255, 0.8)' : 
+            'rgba(0, 0, 0, 0.7)';
         },
-        grid: {
-          color: theme => theme.color === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
+        font: {
+          size: window.innerWidth < 640 ? 9 : 11,
         },
       },
-      y: {
-        ticks: {
-          color: theme => theme.color === 'dark' ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.7)',
-        },
-        grid: {
-          color: theme => theme.color === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
+      grid: {
+        display: window.innerWidth >= 640,
+        color: function(context) {
+          return document.documentElement.classList.contains('dark') ? 
+            'rgba(255, 255, 255, 0.1)' : 
+            'rgba(0, 0, 0, 0.1)';
         },
       },
     },
+  },
+  layout: {
+    padding: {
+      top: 5,
+      right: window.innerWidth < 640 ? 5 : 15,
+      bottom: window.innerWidth < 640 ? 5 : 15,
+      left: window.innerWidth < 640 ? 5 : 15
+    }
+  }
+};
+
+// Add window resize handler for responsive charts with debounce
+useEffect(() => {
+  let resizeTimer;
+  
+  const handleResize = () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => {
+      if (chartData) {
+        const newChartData = JSON.parse(JSON.stringify(chartData)); // Deep copy
+        setChartData(newChartData);
+      }
+    }, 250); // Debounce for 250ms
   };
+  
+  window.addEventListener('resize', handleResize);
+  return () => {
+    window.removeEventListener('resize', handleResize);
+    clearTimeout(resizeTimer);
+  };
+}, [chartData]);
+
+// Add this useEffect after your other useEffects (around line 350)
+
+// Update charts when theme changes
+useEffect(() => {
+  const handleThemeChange = () => {
+    if (chartData) {
+      // Force chart re-render on theme change
+      const newChartData = JSON.parse(JSON.stringify(chartData));
+      setChartData(null);
+      setTimeout(() => setChartData(newChartData), 50);
+    }
+  };
+  
+  // Listen for theme changes
+  const observer = new MutationObserver((mutations) => {
+    mutations.forEach((mutation) => {
+      if (
+        mutation.type === 'attributes' && 
+        mutation.attributeName === 'class' &&
+        (mutation.target.classList.contains('dark') || !mutation.target.classList.contains('dark'))
+      ) {
+        handleThemeChange();
+      }
+    });
+  });
+  
+  observer.observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ['class']
+  });
+  
+  return () => observer.disconnect();
+}, [chartData]);
 
   return (
     <AnimatedPage>
       <div className="min-h-screen">
-        {/* Hero Section with Motion - Keep as is */}
-        <div className="relative h-screen"> {/* Set a specific height */}
+        {/* Hero Section with proper sizing */}
+        <div className="relative min-h-screen hero-section mb-8"> 
           <motion.div 
             className="absolute inset-0"
             initial={{ scale: 1.1, opacity: 0.8 }}
@@ -317,7 +435,7 @@ export default function HomePage() {
 
             {/* Search Bar with Animation */}
             <motion.div 
-              className="mt-10 max-w-xl mx-auto"
+              className="mt-10 max-w-xl mx-auto w-full px-4"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.6, duration: 0.8 }}
@@ -329,7 +447,7 @@ export default function HomePage() {
                   id="search"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="focus:ring-primary-500 focus:border-primary-500 flex-grow block w-full rounded-l-md text-neutral-900 border-neutral-300 px-4 py-3"
+                  className="focus:ring-blue-500 focus:border-blue-500 flex-grow block w-full rounded-l-md text-neutral-900 dark:text-white border-neutral-300 dark:border-neutral-600 px-5 py-4 text-lg bg-white/90 dark:bg-neutral-800/90 backdrop-blur-sm"
                   placeholder="Search for a country..."
                   onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
                 />
@@ -338,7 +456,7 @@ export default function HomePage() {
                   whileTap={{ scale: 0.95 }}
                   type="button"
                   onClick={handleSearch}
-                  className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-r-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  className="inline-flex items-center px-6 sm:px-8 py-4 border border-transparent text-lg font-medium rounded-r-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                 >
                   {isSearching ? (
                     <motion.div
@@ -350,10 +468,10 @@ export default function HomePage() {
                 </motion.button>
               </div>
               
-              {/* Search Results */}
+              {/* Search Results - improved visibility */}
               {searchResults.length > 0 && (
                 <motion.div 
-                  className="mt-2 bg-white dark:bg-neutral-800 rounded-md shadow-lg overflow-hidden"
+                  className="mt-2 bg-white dark:bg-neutral-800 rounded-md shadow-lg overflow-hidden z-10 relative"
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.3 }}
@@ -367,10 +485,10 @@ export default function HomePage() {
                         <img 
                           src={country.flags.png} 
                           alt={`Flag of ${country.name.common}`} 
-                          className="w-8 h-6 object-cover"
+                          className="w-8 h-6 object-cover shadow-sm"
                         />
                         <div>
-                          <p className="font-medium">{country.name.common}</p>
+                          <p className="font-medium text-neutral-900 dark:text-white">{country.name.common}</p>
                           <p className="text-sm text-gray-600 dark:text-gray-300">
                             {country.region} • {country.capital?.[0] || 'No capital'}
                           </p>
@@ -384,224 +502,282 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* Chart Section - New */}
-        {chartData && (
-          <motion.div 
-            className="bg-white dark:bg-neutral-900 py-16"
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8 }}
-          >
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-              <motion.h2 
-                className="text-3xl font-bold font-display mb-8 text-center"
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.6 }}
-              >
-                Global Insights
-              </motion.h2>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8">
-                {/* Population by Region Chart */}
-                <motion.div 
-                  className="bg-white dark:bg-neutral-800 p-6 rounded-lg shadow-lg"
-                  initial={{ opacity: 0, x: -30 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.6, delay: 0.2 }}
-                >
-                  <h3 className="text-xl font-semibold mb-4">Population by Region</h3>
-                  <div className="h-80">
-                    <Bar 
-                      options={chartOptions} 
-                      data={chartData.populationByRegion} 
-                    />
-                  </div>
-                </motion.div>
-                
-                {/* Region Distribution Chart */}
-                <motion.div 
-                  className="bg-white dark:bg-neutral-800 p-6 rounded-lg shadow-lg"
-                  initial={{ opacity: 0, x: 30 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.6, delay: 0.4 }}
-                >
-                  <h3 className="text-xl font-semibold mb-4">Region Distribution</h3>
-                  <div className="h-80 flex justify-center">
-                    <div className="w-full max-w-md">
-                      <Pie
-                        options={{
-                          responsive: true,
-                          maintainAspectRatio: false,
-                          plugins: {
-                            legend: {
-                              position: 'right',
-                              labels: {
-                                color: theme => theme.color === 'dark' ? '#fff' : '#333'
-                              }
-                            }
-                          }
-                        }} 
-                        data={chartData.regionDistribution} 
-                      />
-                    </div>
-                  </div>
-                </motion.div>
-                
-                {/* Top 10 Populated Countries */}
-                <motion.div 
-                  className="bg-white dark:bg-neutral-800 p-6 rounded-lg shadow-lg"
-                  initial={{ opacity: 0, y: 30 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.6, delay: 0.6 }}
-                >
-                  <h3 className="text-xl font-semibold mb-4">Top 10 Most Populated Countries</h3>
-                  <div className="h-80">
-                    <Bar 
-                      options={{
-                        ...chartOptions,
-                        indexAxis: 'y',
-                        plugins: {
-                          ...chartOptions.plugins,
-                          legend: {
-                            ...chartOptions.plugins.legend,
-                            display: false,
-                          }
-                        },
-                      }} 
-                      data={chartData.topPopulatedCountries} 
-                    />
-                  </div>
-                </motion.div>
-                
-                {/* Top Languages */}
-                <motion.div 
-                  className="bg-white dark:bg-neutral-800 p-6 rounded-lg shadow-lg"
-                  initial={{ opacity: 0, y: 30 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.6, delay: 0.8 }}
-                >
-                  <h3 className="text-xl font-semibold mb-4">Most Common Languages</h3>
-                  <div className="h-80">
-                    <PolarArea 
-                      options={{
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                          legend: {
-                            position: 'right',
-                            labels: {
-                              color: theme => theme.color === 'dark' ? '#fff' : '#333'
-                            }
-                          }
-                        }
-                      }} 
-                      data={chartData.topLanguages} 
-                    />
-                  </div>
-                </motion.div>
-              </div>
-            </div>
-          </motion.div>
-        )}
+        {/* Chart Section - Fix spacing and overlapping issues */}
+{chartData && (
+  <motion.div 
+    className="bg-white dark:bg-neutral-900 py-16 mt-35" // Reduced from mt-40 to mt-20
+    initial={{ opacity: 0 }}
+    whileInView={{ opacity: 1 }}
+    viewport={{ once: true }}
+    transition={{ duration: 0.8 }}
+  >
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <motion.h2 
+        className="text-3xl font-bold font-display mb-10 text-center text-neutral-900 dark:text-white"
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.6 }}
+      >
+        Global Insights
+      </motion.h2>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-10">
+        {/* Population by Region Chart */}
+        <motion.div 
+          className="bg-white dark:bg-neutral-800 p-5 sm:p-6 rounded-lg shadow-lg"
+          initial={{ opacity: 0, x: -30 }}
+          whileInView={{ opacity: 1, x: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+        >
+          <h3 className="text-lg md:text-xl font-semibold mb-4 md:mb-5 text-neutral-900 dark:text-white">Population by Region</h3>
+          <div className="h-64 sm:h-72 overflow-hidden chart-container">
+            <Bar 
+              height={280}
+              options={{
+                ...chartOptions,
+                maintainAspectRatio: false,
+                animation: {
+                  duration: 300 // Further reduced animation duration
+                },
+                scales: {
+                  x: {
+                    ...chartOptions.scales.x,
+                    ticks: {
+                      ...chartOptions.scales.x.ticks,
+                      color: document.documentElement.classList.contains('dark') ? 
+                        'rgba(255, 255, 255, 0.8)' : 'rgba(0, 0, 0, 0.7)'
+                    },
+                    grid: {
+                      ...chartOptions.scales.x.grid,
+                      color: document.documentElement.classList.contains('dark') ? 
+                        'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'
+                    }
+                  },
+                  y: {
+                    ...chartOptions.scales.y,
+                    ticks: {
+                      ...chartOptions.scales.y.ticks,
+                      color: document.documentElement.classList.contains('dark') ? 
+                        'rgba(255, 255, 255, 0.8)' : 'rgba(0, 0, 0, 0.7)'
+                    },
+                    grid: {
+                      ...chartOptions.scales.y.grid,
+                      color: document.documentElement.classList.contains('dark') ? 
+                        'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'
+                    }
+                  }
+                },
+                plugins: {
+                  ...chartOptions.plugins,
+                  legend: {
+                    ...chartOptions.plugins.legend,
+                    labels: {
+                      ...chartOptions.plugins.legend.labels,
+                      color: document.documentElement.classList.contains('dark') ? 
+                        'rgba(255, 255, 255, 0.9)' : 'rgba(0, 0, 0, 0.8)'
+                    }
+                  }
+                }
+              }} 
+              data={chartData.populationByRegion} 
+            />
+          </div>
+        </motion.div>
+        
+        {/* Region Distribution Chart */}
+        <motion.div 
+          className="bg-white dark:bg-neutral-800 p-5 sm:p-6 rounded-lg shadow-lg"
+          initial={{ opacity: 0, x: 30 }}
+          whileInView={{ opacity: 1, x: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, delay: 0.3 }}
+        >
+          <h3 className="text-lg md:text-xl font-semibold mb-4 md:mb-5 text-neutral-900 dark:text-white">Countries by Region</h3>
+          <div className="h-64 sm:h-72 overflow-hidden">
+            <Pie
+              height={280}
+              options={{
+                ...chartOptions,
+                maintainAspectRatio: false,
+                animation: {
+                  duration: 500 // Reduce animation duration
+                },
+                plugins: {
+                  ...chartOptions.plugins,
+                  legend: {
+                    ...chartOptions.plugins.legend,
+                    position: 'right',
+                  }
+                }
+              }}
+              data={chartData.regionDistribution}
+            />
+          </div>
+        </motion.div>
+        
+        {/* Top Populated Countries Chart */}
+        <motion.div 
+          className="bg-white dark:bg-neutral-800 p-5 sm:p-6 rounded-lg shadow-lg"
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, delay: 0.4 }}
+        >
+          <h3 className="text-lg md:text-xl font-semibold mb-4 md:mb-5 text-neutral-900 dark:text-white">Most Populated Countries</h3>
+          <div className="h-64 sm:h-72 overflow-hidden">
+            <Bar 
+              height={280}
+              options={{
+                ...chartOptions,
+                maintainAspectRatio: false,
+                animation: {
+                  duration: 500 // Reduce animation duration
+                },
+                indexAxis: 'y',
+                plugins: {
+                  ...chartOptions.plugins,
+                  legend: {
+                    display: false
+                  }
+                }
+              }}
+              data={chartData.topPopulatedCountries}
+            />
+          </div>
+        </motion.div>
+        
+        {/* Languages Chart */}
+        <motion.div 
+          className="bg-white dark:bg-neutral-800 p-5 sm:p-6 rounded-lg shadow-lg"
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, delay: 0.5 }}
+        >
+          <h3 className="text-lg md:text-xl font-semibold mb-4 md:mb-5 text-neutral-900 dark:text-white">Most Common Languages</h3>
+          <div className="h-64 sm:h-72 overflow-hidden">
+            <PolarArea
+              height={280}
+              options={{
+                ...chartOptions,
+                maintainAspectRatio: false,
+                animation: {
+                  duration: 500 // Reduce animation duration
+                },
+                plugins: {
+                  ...chartOptions.plugins,
+                  legend: {
+                    ...chartOptions.plugins.legend,
+                    position: 'right',
+                    labels: {
+                      ...chartOptions.plugins.legend.labels,
+                      boxWidth: 10
+                    }
+                  }
+                }
+              }}
+              data={chartData.topLanguages}
+            />
+          </div>
+        </motion.div>
+      </div>
+    </div>
+  </motion.div>
+)}
 
         {/* Featured Countries Section - Keep existing code */}
         {/* ... existing featured countries section ... */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-          <motion.h2 
-            className="text-3xl font-bold text-neutral-900 dark:text-white font-display"
-            initial={{ opacity: 0, x: -20 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-          >
-            Featured Countries
-          </motion.h2>
-          
-          <motion.div 
-            className="mt-6 grid gap-8 sm:grid-cols-2 lg:grid-cols-4"
-            variants={containerVariants}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-          >
-            {loading ? (
-              // Loading placeholders
-              [...Array(4)].map((_, i) => (
-                <motion.div 
-                  key={i}
-                  className="bg-white dark:bg-neutral-800 rounded-lg shadow-lg overflow-hidden"
-                  initial={{ opacity: 0.6 }}
-                  animate={{ 
-                    opacity: [0.6, 0.8, 0.6],
-                  }}
-                  transition={{ duration: 1.5, repeat: Infinity }}
+  <motion.h2 
+    className="text-3xl font-bold text-neutral-900 dark:text-white font-display mb-6"
+    initial={{ opacity: 0, x: -20 }}
+    whileInView={{ opacity: 1, x: 0 }}
+    viewport={{ once: true }}
+    transition={{ duration: 0.6 }}
+  >
+    Featured Countries
+  </motion.h2>
+  
+  <motion.div 
+    className="mt-6 grid gap-6 sm:gap-8 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4"
+    variants={containerVariants}
+    initial="hidden"
+    whileInView="visible"
+    viewport={{ once: true }}
+  >
+    {loading ? (
+      // Loading placeholders
+      [...Array(4)].map((_, i) => (
+        <motion.div 
+          key={i}
+          className="bg-white dark:bg-neutral-800 rounded-lg shadow-lg overflow-hidden"
+          initial={{ opacity: 0.6 }}
+          animate={{ 
+            opacity: [0.6, 0.8, 0.6],
+          }}
+          transition={{ duration: 1.5, repeat: Infinity }}
+        >
+          <div className="h-48 w-full bg-neutral-200 dark:bg-neutral-700"></div>
+          <div className="p-6">
+            <div className="h-6 w-2/3 bg-neutral-200 dark:bg-neutral-700 rounded mb-4"></div>
+            <div className="h-4 w-full bg-neutral-200 dark:bg-neutral-700 rounded mb-2"></div>
+            <div className="h-4 w-3/4 bg-neutral-200 dark:bg-neutral-700 rounded"></div>
+          </div>
+        </motion.div>
+      ))
+    ) : (
+      featuredCountries.map((country) => (
+        <motion.div 
+          key={country.id} 
+          className="bg-white dark:bg-neutral-800 rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow"
+          variants={itemVariants}
+          whileHover={{ y: -10, boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)" }}
+        >
+          <div className="h-48 w-full overflow-hidden">
+            <motion.img 
+              src={country.image} 
+              alt={country.name} 
+              className="w-full h-full object-cover"
+              whileHover={{ scale: 1.1 }}
+              transition={{ duration: 0.5 }}
+            />
+          </div>
+          <div className="p-6">
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <h3 className="text-xl font-semibold text-neutral-900 dark:text-white">
+                {country.name}
+              </h3>
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-200">
+                {country.region}
+              </span>
+            </div>
+            <p className="mt-2 text-neutral-600 dark:text-neutral-300 text-sm">
+              {country.description}
+            </p>
+            <div className="mt-4">
+              <motion.div
+                whileHover={{ x: 5 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <Link
+                  to={`/country/${country.cca3}`}
+                  className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium text-sm inline-flex items-center"
                 >
-                  <div className="h-48 w-full bg-neutral-200 dark:bg-neutral-700"></div>
-                  <div className="p-6">
-                    <div className="h-6 w-2/3 bg-neutral-200 dark:bg-neutral-700 rounded mb-4"></div>
-                    <div className="h-4 w-full bg-neutral-200 dark:bg-neutral-700 rounded mb-2"></div>
-                    <div className="h-4 w-3/4 bg-neutral-200 dark:bg-neutral-700 rounded"></div>
-                  </div>
-                </motion.div>
-              ))
-            ) : (
-              featuredCountries.map((country) => (
-                <motion.div 
-                  key={country.id} 
-                  className="bg-white dark:bg-neutral-800 rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow"
-                  variants={itemVariants}
-                  whileHover={{ y: -10, boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)" }}
-                >
-                  <div className="h-48 w-full overflow-hidden">
-                    <motion.img 
-                      src={country.image} 
-                      alt={country.name} 
-                      className="w-full h-full object-cover"
-                      whileHover={{ scale: 1.1 }}
-                      transition={{ duration: 0.5 }}
-                    />
-                  </div>
-                  <div className="p-6">
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-xl font-semibold text-neutral-900 dark:text-white">
-                        {country.name}
-                      </h3>
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-200">
-                        {country.region}
-                      </span>
-                    </div>
-                    <p className="mt-2 text-neutral-600 dark:text-neutral-300 text-sm">
-                      {country.description}
-                    </p>
-                    <div className="mt-4">
-                      <motion.div
-                        whileHover={{ x: 5 }}
-                        whileTap={{ scale: 0.95 }}
-                      >
-                        <Link
-                          to={`/country/${country.cca3}`}
-                          className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium text-sm inline-flex items-center"
-                        >
-                          Explore
-                          <svg xmlns="http://www.w3.org/2000/svg" className="ml-1 h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                            <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
-                          </svg>
-                        </Link>
-                      </motion.div>
-                    </div>
-                  </div>
-                </motion.div>
-              ))
-            )}
-          </motion.div>
-        </div>
+                  Explore
+                  <svg xmlns="http://www.w3.org/2000/svg" className="ml-1 h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                  </svg>
+                </Link>
+              </motion.div>
+            </div>
+          </div>
+        </motion.div>
+      ))
+    )}
+  </motion.div>
+</div>
 
         {/* Browse by Region Section - Keep existing code */}
         {/* ... existing browse by region section ... */}
@@ -614,7 +790,7 @@ export default function HomePage() {
         >
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <motion.h2
-              className="text-3xl font-bold text-neutral-900 dark:text-white font-display"
+              className="text-3xl font-bold text-neutral-900 dark:text-white font-display mb-6"
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
@@ -676,7 +852,7 @@ export default function HomePage() {
               <span className="block text-blue-200">Start your journey today!</span>
             </motion.h2>
             
-            <div className="mt-8 flex lg:mt-0 lg:flex-shrink-0 space-x-4">
+            <div className="mt-8 flex flex-col sm:flex-row lg:mt-0 lg:flex-shrink-0 sm:space-x-4 space-y-4 sm:space-y-0">
               <motion.div 
                 className="inline-flex rounded-md shadow"
                 initial={{ opacity: 0, scale: 0.8 }}
@@ -687,7 +863,7 @@ export default function HomePage() {
               >
                 <Link
                   to="/countries"
-                  className="inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-blue-700 bg-white hover:bg-neutral-50"
+                  className="w-full inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-blue-700 bg-white hover:bg-neutral-50"
                 >
                   View All Countries
                 </Link>
@@ -703,7 +879,7 @@ export default function HomePage() {
               >
                 <Link
                   to="/explore"
-                  className="inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-500 hover:bg-blue-600"
+                  className="w-full inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-500 hover:bg-blue-600"
                 >
                   Explore Interactive Map
                 </Link>

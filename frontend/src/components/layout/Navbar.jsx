@@ -124,12 +124,16 @@ const Navbar = () => {
                 
                 <div>
                   <motion.h1 
-                    className="font-bold text-transparent text-xl bg-clip-text bg-gradient-to-r from-cyan-400 via-white to-fuchsia-300"
+                    className={`font-bold text-xl ${
+                      theme === 'dark' 
+                        ? 'text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-white to-fuchsia-300' 
+                        : 'text-transparent bg-clip-text bg-gradient-to-r from-indigo-900 via-purple-700 to-fuchsia-800'
+                    }`}
                     initial={{ opacity: 0, y: 5 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.2 }}
                   >
-                    {scrolled ? 'C.Explorer' : 'Countries Explorer'}
+                    {scrolled ? 'N.Navigation' : 'National Navigation'}
                   </motion.h1>
                 </div>
               </Link>
@@ -160,6 +164,12 @@ const Navbar = () => {
                       className="text-sm font-medium text-white hover:text-white/90 transition"
                     >
                       {user?.username || 'Profile'}
+                    </Link>
+                    <Link
+                      to="/favorites"
+                      className="text-sm font-medium text-white hover:text-white/90 transition"
+                    >
+                      Favorites
                     </Link>
                     <motion.button
                       onClick={() => {
@@ -330,6 +340,7 @@ const Navbar = () => {
                     <>
                       <div className="border-t border-white/10 my-2"></div>
                       <MobileNavItem to="/profile" label="Profile" onClick={() => setMenuOpen(false)} />
+                      <MobileNavItem to="/favorites" label="Favorites" onClick={() => setMenuOpen(false)} />
                       <div 
                         className="block p-3 rounded-lg text-white hover:bg-white/10 cursor-pointer"
                         onClick={() => {
@@ -391,7 +402,7 @@ const NavItem = ({ to, label, currentPath }) => {
       <Link 
         to={to}
         className={`
-          relative px-4 py-2 inline-block rounded-full text-sm font-medium transition-all duration-300
+          relative px-2 sm:px-3 md:px-4 py-2 inline-block rounded-full text-xs sm:text-sm font-medium transition-all duration-300
           ${isActive 
             ? 'text-white font-bold' // Bolder text when active
             : 'text-white hover:text-white/90'  // Always white text

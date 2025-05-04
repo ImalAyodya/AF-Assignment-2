@@ -17,9 +17,21 @@ const pageVariants = {
 
 const pageTransition = {
   type: 'tween',
-  ease: 'anticipate',
-  duration: 0.5
+  ease: 'easeInOut', // Change from 'anticipate' to something more gentle
+  duration: 0.3 // Reduce duration
 };
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.03, // Reduce stagger time
+      when: "beforeChildren", // Ensure parent animates first
+      delayChildren: 0.2 // Delay children animations
+    }
+  }
+}
 
 const AnimatedPage = ({ children }) => {
   return (

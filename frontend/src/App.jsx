@@ -12,6 +12,9 @@ import AboutPage from './pages/AboutPage'
 import NotFoundPage from './pages/NotFoundPage'
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
+import FavoritesPage from './pages/FavoritesPage'
+import ProfilePage from './pages/ProfilePage'
+import ProtectedRoute from './components/ProtectedRoute'
 import './App.css'
 
 // Route transition wrapper
@@ -21,15 +24,41 @@ function AnimatedRoutes() {
   return (
     <AnimatePresence mode="wait">
       <Routes location={location} key={location.pathname}>
+        {/* Public routes */}
         <Route path="/" element={<HomePage />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
         <Route path="/countries" element={<CountriesPage />} />
         <Route path="/country/:countryCode" element={<CountryDetailsPage />} />
         <Route path="/region/:regionName" element={<CountriesPage />} />
-        <Route path="/explore" element={<ExplorePage />} />
         <Route path="/about" element={<AboutPage />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
         <Route path="*" element={<NotFoundPage />} />
+
+        {/* Protected routes */}
+        <Route 
+          path="/profile" 
+          element={
+            <ProtectedRoute>
+              <ProfilePage />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/favorites" 
+          element={
+            <ProtectedRoute>
+              <FavoritesPage />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/explore" 
+          element={
+            <ProtectedRoute>
+              <ExplorePage />
+            </ProtectedRoute>
+          } 
+        />
       </Routes>
     </AnimatePresence>
   );
@@ -42,8 +71,7 @@ function App() {
         <AuthProvider>
           <div className="flex flex-col min-h-screen bg-neutral-50 dark:bg-neutral-950 text-neutral-900 dark:text-white">
             <Navbar />
-            {/* Add proper top padding to account for the fixed navbar */}
-            <main className="flex-grow pt-16 md:pt-20"> {/* Increased padding for different screen sizes */}
+            <main className="flex-grow pt-16 sm:pt-[4.5rem] md:pt-20 overflow-x-hidden w-full">
               <AnimatedRoutes />
             </main>
             <Footer />
